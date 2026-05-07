@@ -16,37 +16,36 @@ public class HomePage {
         PageFactory.initElements(driver, this);
     }
 
-    // --- POPUP LOCATOR ---
     @FindBy(xpath = "//button[@aria-label='Dismiss sign-in info.']")
     WebElement dismissSignIn;
 
-    // --- SEARCH LOCATORS ---
     @FindBy(xpath = "//input[@name='ss']")
     WebElement destinationInput;
 
     @FindBy(xpath = "//button[@type='submit']")
     WebElement searchButton;
 
-    // --- OCCUPANCY LOCATORS (Provided by you) ---
     @FindBy(xpath = "//button[@data-testid='occupancy-config']")
     WebElement occupancyButton;
 
     @FindBy(xpath = "(//div[@data-testid='occupancy-popup']/div/div/div/button)[2]")
     WebElement addAdultButton;
 
+    @FindBy(xpath = "(//div[@data-testid='occupancy-popup']/div/div/div/button)[1]")
+    WebElement subtractAdultButton;
+
     public void dismissPopupIfPresent() {
         try {
             WaitUtils.waitForElementToBeClickable(driver, dismissSignIn, 10);
             dismissSignIn.click();
         } catch (Exception e) {
-            System.out.println("Popup didn't appear or couldn't be forced closed: " + e.getMessage());
+            System.out.println("Popup didn't appear or couldn't be forced closed.");
         }
     }
 
     public void enterSearchDetails(String dest) {
         WaitUtils.waitForElementToBeVisible(driver, destinationInput, 10);
         destinationInput.sendKeys(dest);
-        System.out.println("Typed '" + dest + "' into search box.");
 
         String dynamicXpath = "//div[text()='" + dest + "']";
 
@@ -54,22 +53,18 @@ public class HomePage {
             WebElement suggestion = new org.openqa.selenium.support.ui.WebDriverWait(driver, java.time.Duration.ofSeconds(10))
                     .until(org.openqa.selenium.support.ui.ExpectedConditions.elementToBeClickable(org.openqa.selenium.By.xpath(dynamicXpath)));
             suggestion.click();
-            System.out.println("Clicked on the auto-suggest option for: " + dest);
         } catch (Exception e) {
-            System.out.println("Auto-suggest dropdown did not appear or wasn't clickable. Proceeding with standard search.");
+            System.out.println("Auto-suggest dropdown did not appear or wasn't clickable.");
         }
     }
 
-    public void selectDates() {
+    public void selectDates(int daysOfStay) {
         LocalDate tomorrow = LocalDate.now().plusDays(1);
-        LocalDate checkoutDate = tomorrow.plusDays(5);
+        LocalDate checkoutDate = tomorrow.plusDays(daysOfStay);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String checkinStr = tomorrow.format(formatter);
         String checkoutStr = checkoutDate.format(formatter);
-
-        System.out.println("Selecting Check-in: " + checkinStr);
-        System.out.println("Selecting Check-out: " + checkoutStr);
 
         String checkinXpath = "//*[@data-date='" + checkinStr + "']";
         String checkoutXpath = "//*[@data-date='" + checkoutStr + "']";
@@ -82,29 +77,34 @@ public class HomePage {
             WebElement checkoutElement = new org.openqa.selenium.support.ui.WebDriverWait(driver, java.time.Duration.ofSeconds(10))
                     .until(org.openqa.selenium.support.ui.ExpectedConditions.elementToBeClickable(org.openqa.selenium.By.xpath(checkoutXpath)));
             checkoutElement.click();
-
-            System.out.println("Dates selected successfully.");
         } catch (Exception e) {
-            System.out.println("Calendar selection failed: " + e.getMessage());
+            System.out.println("Calendar selection failed.");
         }
     }
 
-    public void selectFourAdults() {
+    public void selectAdults(int targetAdults) {
         WaitUtils.waitForElementToBeClickable(driver, occupancyButton, 10);
         occupancyButton.click();
-        System.out.println("Opened occupancy dropdown.");
 
-        WaitUtils.waitForElementToBeClickable(driver, addAdultButton, 10);
+        int clicksRequired = targetAdults - 2;
 
-        for (int i = 0; i < 2; i++) {
-            addAdultButton.click();
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        try {
+            if (clicksRequired > 0) {
+                WaitUtils.waitForElementToBeClickable(driver, addAdultButton, 10);
+                for (int i = 0; i < clicksRequired; i++) {
+                    addAdultButton.click();
+                    Thread.sleep(500);
+                }
+            } else if (clicksRequired < 0) {
+                WaitUtils.waitForElementToBeClickable(driver, subtractAdultButton, 10);
+                for (int i = 0; i < Math.abs(clicksRequired); i++) {
+                    subtractAdultButton.click();
+                    Thread.sleep(500);
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        System.out.println("Successfully selected 4 adults.");
     }
 
     public void clickSearch() {

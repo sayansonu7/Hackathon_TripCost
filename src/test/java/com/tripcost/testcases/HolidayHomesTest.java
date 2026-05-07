@@ -19,33 +19,62 @@ public class HolidayHomesTest extends BaseClass {
     }
 
     @Test(dataProvider = "holidayData", groups = {"Smoke", "Regression"})
-    public void verifyHolidayHomesExtraction(String colA, String testCaseName, String destination, String resultCol) {
-        if (!testCaseName.trim().equalsIgnoreCase("VerifyHolidayHomes")) {
-            throw new SkipException("Skipped row: Not applicable for Holiday Homes test");
+    public void verifyHolidayHomesExtraction(String id, String testCaseName, String destination, String adultsStr, String daysStr, String primaryFilter, String secondaryFilter, String status) {
+
+        if (testCaseName == null || (!testCaseName.trim().equalsIgnoreCase("VerifyHolidayHomes") && !testCaseName.toLowerCase().contains("testcase"))) {
+            throw new SkipException("Skipped row");
         }
 
+        int rowNum = 1;
+        String excelPath = System.getProperty("user.dir") + "/src/test/resources/testdata.xlsx";
+
         try {
+            rowNum = Integer.parseInt(id.replace("TC", ""));
+
+            int adults = (adultsStr != null && !adultsStr.isEmpty()) ? (int) Double.parseDouble(adultsStr) : 2;
+            int days = (daysStr != null && !daysStr.isEmpty()) ? (int) Double.parseDouble(daysStr) : 5;
+
             HomePage homePage = new HomePage(getDriver());
 
             homePage.dismissPopupIfPresent();
             homePage.enterSearchDetails(destination);
-            homePage.selectDates();
-            homePage.selectFourAdults();
+            homePage.selectDates(days);
+            homePage.selectAdults(adults);
             homePage.clickSearch();
 
-            System.out.println("Search executed. Moving to Results Page...");
-
             HolidayHomesPage holidayHomesPage = new HolidayHomesPage(getDriver());
-            holidayHomesPage.applyBookingFilters();
+
+            boolean customSortApplied = false;
+
+            if (primaryFilter != null && !primaryFilter.trim().isEmpty()) {
+                if (primaryFilter.toLowerCase().contains("price") || primaryFilter.toLowerCase().contains("reviewed")) {
+                    holidayHomesPage.applyDynamicSort(primaryFilter);
+                    customSortApplied = true;
+                } else {
+                    holidayHomesPage.applyDynamicFilter(primaryFilter);
+                }
+            }
+
+            if (secondaryFilter != null && !secondaryFilter.trim().isEmpty()) {
+                if (secondaryFilter.toLowerCase().contains("price") || secondaryFilter.toLowerCase().contains("reviewed")) {
+                    holidayHomesPage.applyDynamicSort(secondaryFilter);
+                    customSortApplied = true;
+                } else {
+                    holidayHomesPage.applyDynamicFilter(secondaryFilter);
+                }
+            }
+
+            if (!customSortApplied) {
+                holidayHomesPage.applyDynamicSort("Property rating (high to low)");
+            }
+
             holidayHomesPage.getTopThreeResults();
 
-            String excelPath = System.getProperty("user.dir") + "/src/test/resources/testdata.xlsx";
-            ExcelUtils.setCellData(excelPath, "Sheet1", 1, 3, "PASS");
+            ExcelUtils.setCellData(excelPath, "Sheet1", rowNum, 7, "PASS");
 
         } catch (Exception e) {
             try {
-                String excelPath = System.getProperty("user.dir") + "/src/test/resources/testdata.xlsx";
-                ExcelUtils.setCellData(excelPath, "Sheet1", 1, 3, "FAIL");
+                ExcelUtils.setCellData(excelPath, "Sheet1", rowNum, 7, "FAIL");
             } catch (Exception excelError) {
                 System.out.println("Could not write FAIL status to Excel.");
             }
