@@ -78,17 +78,27 @@ public class HolidayHomesPage {
         }
     }
 
-    public void getTopThreeResults() {
+    private String calculatePerNight(String total, int nights) {
+        try {
+            String numeric = total.replaceAll("[^0-9]", "");
+            return "₹ " + (Integer.parseInt(numeric) / nights);
+        } catch (Exception e) {
+            return "N/A";
+        }
+    }
+
+    public void getTopThreeResults(int nights) {
         int count = Math.min(3, hotelNames.size());
         for (int i = 0; i < count; i++) {
             System.out.println("Property " + (i + 1) + ": " + hotelNames.get(i).getText());
-            System.out.println("Total Amount: " + totalPrices.get(i).getText());
 
-            if (i < perNightPrices.size()) {
-                System.out.println("Charges Per Night: " + perNightPrices.get(i).getText());
-            } else {
-                System.out.println("Charges Per Night: Data not found on card.");
-            }
+            String totalText = totalPrices.get(i).getText();
+            System.out.println("Total Amount: " + totalText);
+
+            // Use the new calculator method
+            String calculatedPerNight = calculatePerNight(totalText, nights);
+            System.out.println("Calculated Charges Per Night: " + calculatedPerNight);
+
             System.out.println("---------------------------------------");
         }
     }

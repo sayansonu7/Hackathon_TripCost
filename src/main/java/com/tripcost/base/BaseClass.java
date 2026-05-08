@@ -1,11 +1,13 @@
 package com.tripcost.base;
 
+import com.tripcost.utils.ScreenshotUtils;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import java.io.FileInputStream;
@@ -59,8 +61,14 @@ public class BaseClass {
         return driver.get();
     }
 
-    @AfterMethod(groups = {"Smoke", "Regression"})
-    public void tearDown() {
+    @AfterMethod(groups = {"Smoke", "Regression"}, alwaysRun = true)
+    public void tearDown(ITestResult result) {
+        if (ITestResult.FAILURE == result.getStatus()) {
+            ScreenshotUtils.capture(result.getName(), false);
+        } else if (ITestResult.SUCCESS == result.getStatus()) {
+            ScreenshotUtils.capture(result.getName(), true);
+        }
+
         if (getDriver() != null) {
             getDriver().quit();
             driver.remove();

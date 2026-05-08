@@ -68,7 +68,7 @@ public class HolidayHomesTest extends BaseClass {
                 holidayHomesPage.applyDynamicSort("Property rating (high to low)");
             }
 
-            holidayHomesPage.getTopThreeResults();
+            holidayHomesPage.getTopThreeResults(days);
 
             ExcelUtils.setCellData(excelPath, "Sheet1", rowNum, 7, "PASS");
 
